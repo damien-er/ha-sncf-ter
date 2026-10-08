@@ -1,0 +1,8 @@
+{
+  "departures": [
+    {"display_informations": {"direction": "Savenay (Savenay)", "trip_short_name": "857401"},
+     "stop_date_time": {"departure_date_time": "20261008T180500", "base_departure_date_time": "20261008T180000", "data_freshness": "realtime"}},
+    {"display_informations": {"direction": "Nantes (Nantes)", "trip_short_name": "857402"},
+     "stop_date_time": {"departure_date_time": "20261008T181000", "base_departure_date_time": "20261008T181000", "data_freshness": "realtime"}}
+  ]
+}

@@ -1,0 +1,330 @@
+rest:
+- resource: "https://api.sncf.com/v1/coverage/sncf/stop_areas/stop_area:SNCF:87481069/departures?count=6&data_freshness=realtime"
+  headers:
+    Authorization: !secret sncf_api_token_b64
+  scan_interval: 60
+  sensor:
+  - name: "SNCF Départs Basse-Indre Raw"
+    unique_id: sncf_departs_basse_indre_raw
+    value_template: "{{ value_json.departures | length }}"
+    json_attributes:
+    - departures
+template:
+- sensor:
+  - name: "SNCF Train Basse Indre 1"
+    unique_id: sncf_train_bi_1
+    state: >
+      {% set deps = state_attr('sensor.sncf_departs_basse_indre_raw', 'departures') | default([])
+      %}
+      {% set savenay = deps | rejectattr('display_informations.direction', 'search', 'Nantes') | list %}
+      {% if savenay | length > 0 %}
+        {{ savenay[0].stop_date_time.departure_date_time[9:11] }}:{{ savenay[0].stop_date_time.departure_date_time[11:13] }}
+      {% else %}N/A{% endif %}
+    attributes:
+      destination: >
+        {% set deps = state_attr('sensor.sncf_departs_basse_indre_raw', 'departures') | default([])
+        %}
+        {% set savenay = deps | rejectattr('display_informations.direction', 'search', 'Nantes') | list %}
+        {{ savenay[0].display_informations.direction.split(' (')[0] if savenay | length > 0 else '–' }}
+      numero: >
+        {% set deps = state_attr('sensor.sncf_departs_basse_indre_raw', 'departures') | default([])
+        %}
+        {% set savenay = deps | rejectattr('display_informations.direction', 'search', 'Nantes') | list %}
+        {{ savenay[0].display_informations.trip_short_name if savenay | length > 0 else '–' }}
+      heure_theorique: >
+        {% set deps = state_attr('sensor.sncf_departs_basse_indre_raw', 'departures') | default([])
+        %}
+        {% set savenay = deps | rejectattr('display_informations.direction', 'search', 'Nantes') | list %}
+        {% if savenay | length > 0 %}
+          {{ savenay[0].stop_date_time.base_departure_date_time[9:11] }}:{{ savenay[0].stop_date_time.base_departure_date_time[11:13] }}
+        {% else %}–{% endif %}
+      en_retard: >
+        {% set deps = state_attr('sensor.sncf_departs_basse_indre_raw', 'departures') | default([])
+        %}
+        {% set savenay = deps | rejectattr('display_informations.direction', 'search', 'Nantes') | list %}
+        {% if savenay | length > 0 %}
+          {% set rt = savenay[0].stop_date_time.departure_date_time %}
+          {% set th = savenay[0].stop_date_time.base_departure_date_time %}
+          {{ rt != th }}
+        {% else %}false{% endif %}
+      retard_minutes: >
+        {% set deps = state_attr('sensor.sncf_departs_basse_indre_raw', 'departures') | default([])
+        %}
+        {% set savenay = deps | rejectattr('display_informations.direction', 'search', 'Nantes') | list %}
+        {% if savenay | length > 0 %}
+          {% set rt = savenay[0].stop_date_time.departure_date_time %}
+          {% set th = savenay[0].stop_date_time.base_departure_date_time %}
+          {% set rt_min = rt[9:11] | int * 60 + rt[11:13] | int %}
+          {% set th_min = th[9:11] | int * 60 + th[11:13] | int %}
+          {{ rt_min - th_min }}
+        {% else %}0{% endif %}
+      data_freshness: >
+        {% set deps = state_attr('sensor.sncf_departs_basse_indre_raw', 'departures') | default([])
+        %}
+        {% set savenay = deps | rejectattr('display_informations.direction', 'search', 'Nantes') | list %}
+        {{ savenay[0].stop_date_time.data_freshness if savenay | length > 0 else 'unknown' }}
+
+  - name: "SNCF Train Basse Indre 2"
+    unique_id: sncf_train_bi_2
+    state: >
+      {% set deps = state_attr('sensor.sncf_departs_basse_indre_raw', 'departures') | default([])
+      %}
+      {% set savenay = deps | rejectattr('display_informations.direction', 'search', 'Nantes') | list %}
+      {% if savenay | length > 1 %}
+        {{ savenay[1].stop_date_time.departure_date_time[9:11] }}:{{ savenay[1].stop_date_time.departure_date_time[11:13] }}
+      {% else %}N/A{% endif %}
+    attributes:
+      destination: >
+        {% set deps = state_attr('sensor.sncf_departs_basse_indre_raw', 'departures') | default([])
+        %}
+        {% set savenay = deps | rejectattr('display_informations.direction', 'search', 'Nantes') | list %}
+        {{ savenay[1].display_informations.direction.split(' (')[0] if savenay | length > 1 else '–' }}
+      numero: >
+        {% set deps = state_attr('sensor.sncf_departs_basse_indre_raw', 'departures') | default([])
+        %}
+        {% set savenay = deps | rejectattr('display_informations.direction', 'search', 'Nantes') | list %}
+        {{ savenay[1].display_informations.trip_short_name if savenay | length > 1 else '–' }}
+      heure_theorique: >
+        {% set deps = state_attr('sensor.sncf_departs_basse_indre_raw', 'departures') | default([])
+        %}
+        {% set savenay = deps | rejectattr('display_informations.direction', 'search', 'Nantes') | list %}
+        {% if savenay | length > 1 %}
+          {{ savenay[1].stop_date_time.base_departure_date_time[9:11] }}:{{ savenay[1].stop_date_time.base_departure_date_time[11:13] }}
+        {% else %}–{% endif %}
+      en_retard: >
+        {% set deps = state_attr('sensor.sncf_departs_basse_indre_raw', 'departures') | default([])
+        %}
+        {% set savenay = deps | rejectattr('display_informations.direction', 'search', 'Nantes') | list %}
+        {% if savenay | length > 1 %}
+          {% set rt = savenay[1].stop_date_time.departure_date_time %}
+          {% set th = savenay[1].stop_date_time.base_departure_date_time %}
+          {{ rt != th }}
+        {% else %}false{% endif %}
+      retard_minutes: >
+        {% set deps = state_attr('sensor.sncf_departs_basse_indre_raw', 'departures') | default([])
+        %}
+        {% set savenay = deps | rejectattr('display_informations.direction', 'search', 'Nantes') | list %}
+        {% if savenay | length > 1 %}
+          {% set rt = savenay[1].stop_date_time.departure_date_time %}
+          {% set th = savenay[1].stop_date_time.base_departure_date_time %}
+          {% set rt_min = rt[9:11] | int * 60 + rt[11:13] | int %}
+          {% set th_min = th[9:11] | int * 60 + th[11:13] | int %}
+          {{ rt_min - th_min }}
+        {% else %}0{% endif %}
+      data_freshness: >
+        {% set deps = state_attr('sensor.sncf_departs_basse_indre_raw', 'departures') | default([])
+        %}
+        {% set savenay = deps | rejectattr('display_informations.direction', 'search', 'Nantes') | list %}
+        {{ savenay[1].stop_date_time.data_freshness if savenay | length > 1 else 'unknown' }}
+
+  - name: "SNCF Train Basse Indre 3"
+    unique_id: sncf_train_bi_3
+    state: >
+      {% set deps = state_attr('sensor.sncf_departs_basse_indre_raw', 'departures') | default([])
+      %}
+      {% set savenay = deps | rejectattr('display_informations.direction', 'search', 'Nantes') | list %}
+      {% if savenay | length > 2 %}
+        {{ savenay[2].stop_date_time.departure_date_time[9:11] }}:{{ savenay[2].stop_date_time.departure_date_time[11:13] }}
+      {% else %}N/A{% endif %}
+    attributes:
+      destination: >
+        {% set deps = state_attr('sensor.sncf_departs_basse_indre_raw', 'departures') | default([])
+        %}
+        {% set savenay = deps | rejectattr('display_informations.direction', 'search', 'Nantes') | list %}
+        {{ savenay[2].display_informations.direction.split(' (')[0] if savenay | length > 2 else '–' }}
+      numero: >
+        {% set deps = state_attr('sensor.sncf_departs_basse_indre_raw', 'departures') | default([])
+        %}
+        {% set savenay = deps | rejectattr('display_informations.direction', 'search', 'Nantes') | list %}
+        {{ savenay[2].display_informations.trip_short_name if savenay | length > 2 else '–' }}
+      heure_theorique: >
+        {% set deps = state_attr('sensor.sncf_departs_basse_indre_raw', 'departures') | default([])
+        %}
+        {% set savenay = deps | rejectattr('display_informations.direction', 'search', 'Nantes') | list %}
+        {% if savenay | length > 2 %}
+          {{ savenay[2].stop_date_time.base_departure_date_time[9:11] }}:{{ savenay[2].stop_date_time.base_departure_date_time[11:13] }}
+        {% else %}–{% endif %}
+      en_retard: >
+        {% set deps = state_attr('sensor.sncf_departs_basse_indre_raw', 'departures') | default([])
+        %}
+        {% set savenay = deps | rejectattr('display_informations.direction', 'search', 'Nantes') | list %}
+        {% if savenay | length > 2 %}
+          {% set rt = savenay[2].stop_date_time.departure_date_time %}
+          {% set th = savenay[2].stop_date_time.base_departure_date_time %}
+          {{ rt != th }}
+        {% else %}false{% endif %}
+      retard_minutes: >
+        {% set deps = state_attr('sensor.sncf_departs_basse_indre_raw', 'departures') | default([])
+        %}
+        {% set savenay = deps | rejectattr('display_informations.direction', 'search', 'Nantes') | list %}
+        {% if savenay | length > 2 %}
+          {% set rt = savenay[2].stop_date_time.departure_date_time %}
+          {% set th = savenay[2].stop_date_time.base_departure_date_time %}
+          {% set rt_min = rt[9:11] | int * 60 + rt[11:13] | int %}
+          {% set th_min = th[9:11] | int * 60 + th[11:13] | int %}
+          {{ rt_min - th_min }}
+        {% else %}0{% endif %}
+      data_freshness: >
+        {% set deps = state_attr('sensor.sncf_departs_basse_indre_raw', 'departures') | default([])
+        %}
+        {% set savenay = deps | rejectattr('display_informations.direction', 'search', 'Nantes') | list %}
+        {{ savenay[2].stop_date_time.data_freshness if savenay | length > 2 else 'unknown' }}
+
+  - name: "SNCF Train Basse Indre Nantes 1"
+    unique_id: sncf_train_bi_nantes_1
+    state: >
+      {% set deps = state_attr('sensor.sncf_departs_basse_indre_raw', 'departures') | default([])
+      %}
+      {% set nantes = deps | selectattr('display_informations.direction', 'search', 'Nantes') | list %}
+      {% if nantes | length > 0 %}
+        {{ nantes[0].stop_date_time.departure_date_time[9:11] }}:{{ nantes[0].stop_date_time.departure_date_time[11:13] }}
+      {% else %}N/A{% endif %}
+    attributes:
+      destination: >
+        {% set deps = state_attr('sensor.sncf_departs_basse_indre_raw', 'departures') | default([])
+        %}
+        {% set nantes = deps | selectattr('display_informations.direction', 'search', 'Nantes') | list %}
+        {{ nantes[0].display_informations.direction.split(' (')[0] if nantes | length > 0 else '–' }}
+      numero: >
+        {% set deps = state_attr('sensor.sncf_departs_basse_indre_raw', 'departures') | default([])
+        %}
+        {% set nantes = deps | selectattr('display_informations.direction', 'search', 'Nantes') | list %}
+        {{ nantes[0].display_informations.trip_short_name if nantes | length > 0 else '–' }}
+      heure_theorique: >
+        {% set deps = state_attr('sensor.sncf_departs_basse_indre_raw', 'departures') | default([])
+        %}
+        {% set nantes = deps | selectattr('display_informations.direction', 'search', 'Nantes') | list %}
+        {% if nantes | length > 0 %}
+          {{ nantes[0].stop_date_time.base_departure_date_time[9:11] }}:{{ nantes[0].stop_date_time.base_departure_date_time[11:13] }}
+        {% else %}–{% endif %}
+      en_retard: >
+        {% set deps = state_attr('sensor.sncf_departs_basse_indre_raw', 'departures') | default([])
+        %}
+        {% set nantes = deps | selectattr('display_informations.direction', 'search', 'Nantes') | list %}
+        {% if nantes | length > 0 %}
+          {% set rt = nantes[0].stop_date_time.departure_date_time %}
+          {% set th = nantes[0].stop_date_time.base_departure_date_time %}
+          {{ rt != th }}
+        {% else %}false{% endif %}
+      retard_minutes: >
+        {% set deps = state_attr('sensor.sncf_departs_basse_indre_raw', 'departures') | default([])
+        %}
+        {% set nantes = deps | selectattr('display_informations.direction', 'search', 'Nantes') | list %}
+        {% if nantes | length > 0 %}
+          {% set rt = nantes[0].stop_date_time.departure_date_time %}
+          {% set th = nantes[0].stop_date_time.base_departure_date_time %}
+          {% set rt_min = rt[9:11] | int * 60 + rt[11:13] | int %}
+          {% set th_min = th[9:11] | int * 60 + th[11:13] | int %}
+          {{ rt_min - th_min }}
+        {% else %}0{% endif %}
+      data_freshness: >
+        {% set deps = state_attr('sensor.sncf_departs_basse_indre_raw', 'departures') | default([])
+        %}
+        {% set nantes = deps | selectattr('display_informations.direction', 'search', 'Nantes') | list %}
+        {{ nantes[0].stop_date_time.data_freshness if nantes | length > 0 else 'unknown' }}
+
+  - name: "SNCF Train Basse Indre Nantes 2"
+    unique_id: sncf_train_bi_nantes_2
+    state: >
+      {% set deps = state_attr('sensor.sncf_departs_basse_indre_raw', 'departures') | default([])
+      %}
+      {% set nantes = deps | selectattr('display_informations.direction', 'search', 'Nantes') | list %}
+      {% if nantes | length > 1 %}
+        {{ nantes[1].stop_date_time.departure_date_time[9:11] }}:{{ nantes[1].stop_date_time.departure_date_time[11:13] }}
+      {% else %}N/A{% endif %}
+    attributes:
+      destination: >
+        {% set deps = state_attr('sensor.sncf_departs_basse_indre_raw', 'departures') | default([])
+        %}
+        {% set nantes = deps | selectattr('display_informations.direction', 'search', 'Nantes') | list %}
+        {{ nantes[1].display_informations.direction.split(' (')[0] if nantes | length > 1 else '–' }}
+      numero: >
+        {% set deps = state_attr('sensor.sncf_departs_basse_indre_raw', 'departures') | default([])
+        %}
+        {% set nantes = deps | selectattr('display_informations.direction', 'search', 'Nantes') | list %}
+        {{ nantes[1].display_informations.trip_short_name if nantes | length > 1 else '–' }}
+      heure_theorique: >
+        {% set deps = state_attr('sensor.sncf_departs_basse_indre_raw', 'departures') | default([])
+        %}
+        {% set nantes = deps | selectattr('display_informations.direction', 'search', 'Nantes') | list %}
+        {% if nantes | length > 1 %}
+          {{ nantes[1].stop_date_time.base_departure_date_time[9:11] }}:{{ nantes[1].stop_date_time.base_departure_date_time[11:13] }}
+        {% else %}–{% endif %}
+      en_retard: >
+        {% set deps = state_attr('sensor.sncf_departs_basse_indre_raw', 'departures') | default([])
+        %}
+        {% set nantes = deps | selectattr('display_informations.direction', 'search', 'Nantes') | list %}
+        {% if nantes | length > 1 %}
+          {% set rt = nantes[1].stop_date_time.departure_date_time %}
+          {% set th = nantes[1].stop_date_time.base_departure_date_time %}
+          {{ rt != th }}
+        {% else %}false{% endif %}
+      retard_minutes: >
+        {% set deps = state_attr('sensor.sncf_departs_basse_indre_raw', 'departures') | default([])
+        %}
+        {% set nantes = deps | selectattr('display_informations.direction', 'search', 'Nantes') | list %}
+        {% if nantes | length > 1 %}
+          {% set rt = nantes[1].stop_date_time.departure_date_time %}
+          {% set th = nantes[1].stop_date_time.base_departure_date_time %}
+          {% set rt_min = rt[9:11] | int * 60 + rt[11:13] | int %}
+          {% set th_min = th[9:11] | int * 60 + th[11:13] | int %}
+          {{ rt_min - th_min }}
+        {% else %}0{% endif %}
+      data_freshness: >
+        {% set deps = state_attr('sensor.sncf_departs_basse_indre_raw', 'departures') | default([])
+        %}
+        {% set nantes = deps | selectattr('display_informations.direction', 'search', 'Nantes') | list %}
+        {{ nantes[1].stop_date_time.data_freshness if nantes | length > 1 else 'unknown' }}
+
+  - name: "SNCF Train Basse Indre Nantes 3"
+    unique_id: sncf_train_bi_nantes_3
+    state: >
+      {% set deps = state_attr('sensor.sncf_departs_basse_indre_raw', 'departures') | default([])
+      %}
+      {% set nantes = deps | selectattr('display_informations.direction', 'search', 'Nantes') | list %}
+      {% if nantes | length > 2 %}
+        {{ nantes[2].stop_date_time.departure_date_time[9:11] }}:{{ nantes[2].stop_date_time.departure_date_time[11:13] }}
+      {% else %}N/A{% endif %}
+    attributes:
+      destination: >
+        {% set deps = state_attr('sensor.sncf_departs_basse_indre_raw', 'departures') | default([])
+        %}
+        {% set nantes = deps | selectattr('display_informations.direction', 'search', 'Nantes') | list %}
+        {{ nantes[2].display_informations.direction.split(' (')[0] if nantes | length > 2 else '–' }}
+      numero: >
+        {% set deps = state_attr('sensor.sncf_departs_basse_indre_raw', 'departures') | default([])
+        %}
+        {% set nantes = deps | selectattr('display_informations.direction', 'search', 'Nantes') | list %}
+        {{ nantes[2].display_informations.trip_short_name if nantes | length > 2 else '–' }}
+      heure_theorique: >
+        {% set deps = state_attr('sensor.sncf_departs_basse_indre_raw', 'departures') | default([])
+        %}
+        {% set nantes = deps | selectattr('display_informations.direction', 'search', 'Nantes') | list %}
+        {% if nantes | length > 2 %}
+          {{ nantes[2].stop_date_time.base_departure_date_time[9:11] }}:{{ nantes[2].stop_date_time.base_departure_date_time[11:13] }}
+        {% else %}–{% endif %}
+      en_retard: >
+        {% set deps = state_attr('sensor.sncf_departs_basse_indre_raw', 'departures') | default([])
+        %}
+        {% set nantes = deps | selectattr('display_informations.direction', 'search', 'Nantes') | list %}
+        {% if nantes | length > 2 %}
+          {% set rt = nantes[2].stop_date_time.departure_date_time %}
+          {% set th = nantes[2].stop_date_time.base_departure_date_time %}
+          {{ rt != th }}
+        {% else %}false{% endif %}
+      retard_minutes: >
+        {% set deps = state_attr('sensor.sncf_departs_basse_indre_raw', 'departures') | default([])
+        %}
+        {% set nantes = deps | selectattr('display_informations.direction', 'search', 'Nantes') | list %}
+        {% if nantes | length > 2 %}
+          {% set rt = nantes[2].stop_date_time.departure_date_time %}
+          {% set th = nantes[2].stop_date_time.base_departure_date_time %}
+          {% set rt_min = rt[9:11] | int * 60 + rt[11:13] | int %}
+          {% set th_min = th[9:11] | int * 60 + th[11:13] | int %}
+          {{ rt_min - th_min }}
+        {% else %}0{% endif %}
+      data_freshness: >
+        {% set deps = state_attr('sensor.sncf_departs_basse_indre_raw', 'departures') | default([])
+        %}
+        {% set nantes = deps | selectattr('display_informations.direction', 'search', 'Nantes') | list %}
+        {{ nantes[2].stop_date_time.data_freshness if nantes | length > 2 else 'unknown' }}
